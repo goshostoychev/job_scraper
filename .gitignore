@@ -2,3 +2,4 @@
 job_ads.csv
 __pycache__/
 *.pyc
+run.sh
