@@ -7,6 +7,7 @@ import csv
 from bs4 import BeautifulSoup
 import requests
 from dotenv import load_dotenv
+import re
 
 # Load environment variables
 load_dotenv()
@@ -46,6 +47,9 @@ def scrape_jobs(url):
     soup = BeautifulSoup(response.content, "html.parser")
     job_ads = soup.find_all('div', class_='inner-right listing-content-wrap')
     jobs_data = []
+    excluded_keywords = ['PHP', '.NET', 'JAVA', 'JavaScript', 'React',
+                         'Angular', 'C++', 'C#', 'Database', 'Splunk',
+                         'PowerBI', 'Golang', 'French', 'Spanish', 'German']
 
     if response.status_code == 200:
         for job in job_ads:
@@ -53,15 +57,18 @@ def scrape_jobs(url):
                 title = job.find('h6', class_='job-title ab-title-placeholder ab-cb-title-placeholder')
                 date = job.find('span', class_='date date-with-icon')
                 link = job.find('a')
+                job_url = link['href']
 
                 if title and date and link:
-                    jobs_data.append({
-                        'Job Title': title.text.strip(),
-                        'Date posted': date.text.strip(),
-                        'Link': link['href']})
-                    if link['href'] not in csv_job_urls:
-                        telegram_bot_message(f"🔍 New Job "
-                                             f"Found:\n\n{link['href']}")
+                    job_title = title.text.strip().upper()
+                    if not any(keyword.upper() in job_title for keyword in excluded_keywords):
+                        jobs_data.append({
+                            'Job Title': title.text.strip(),
+                            'Date posted': date.text.strip(),
+                            'Link': job_url})
+                        if job_url not in csv_job_urls:
+                            telegram_bot_message(f"🔍 New Job "
+                                                 f"Found:\n\n{job_url}")
                 else:
                     print("Skipping job - missing required elements.")
             except Exception as e:
@@ -72,13 +79,17 @@ def scrape_jobs(url):
     return jobs_data
 
 
-sites = ['https://dev.bg/company/jobs/operations/', 'https://dev.bg/company/jobs/back-end-development/',
-         'https://dev.bg/company/jobs/data-science/', 'https://dev.bg/company/jobs/technical-support/']
+JOB_FILTER = '?_job_location=sofiya%2Cremote'
+
+sites = ['https://dev.bg/company/jobs/operations/',
+         'https://dev.bg/company/jobs/back-end-development/',
+         'https://dev.bg/company/jobs/data-science/',
+         'https://dev.bg/company/jobs/technical-support/']
 
 all_jobs = []
 
 for site in sites:
-    jobs = scrape_jobs(site)
+    jobs = scrape_jobs(site + JOB_FILTER)
     all_jobs.extend(jobs)
 
 with open(CSV_FILENAME, 'w+', newline='', encoding='utf-8') as csvfile:
