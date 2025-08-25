@@ -1,4 +1,4 @@
-# Job Scraper Bot
+# Job Scraper
 
 Automated job scraper that monitors dev.bg for new job postings and sends notifications via Telegram.
 
