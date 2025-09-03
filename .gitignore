@@ -1,0 +1,15 @@
+# Virtual environment
+.venv/
+venv/
+
+# IDE files
+.idea/
+
+# Source folder (if you want to keep ignoring it)
+source/
+
+.env
+job_ads.csv
+__pycache__/
+*.pyc
+run.sh
